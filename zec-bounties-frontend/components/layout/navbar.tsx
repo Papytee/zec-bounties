@@ -2,10 +2,10 @@
 
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
+import { NotificationCenter } from "@/components/notification-center";
 import {
   Moon,
   Sun,
-  Bell,
   Search,
   Wallet,
   Menu,
@@ -294,11 +294,7 @@ export function Navbar({
 
             <ThemePicker />
 
-            {currentUser && (
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <Bell className="h-4 w-4" />
-              </Button>
-            )}
+            {currentUser && <NotificationCenter />}
 
             {!currentUser ? (
               <Button
@@ -462,10 +458,10 @@ export function Navbar({
 
                       <RoleToggleButton compact />
 
-                      <Button variant="outline" className="gap-2 justify-start">
-                        <Bell className="h-4 w-4" />
-                        Notifications
-                      </Button>
+                      <NotificationCenter
+                        mobile
+                        onNavigate={() => setMobileMenuOpen(false)}
+                      />
 
                       <div className="border-t" />
 

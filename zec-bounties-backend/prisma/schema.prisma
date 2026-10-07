@@ -51,6 +51,7 @@ model User {
   badges               Json                @default("[]")
   pushNotifications    Boolean @default(true)
   pushSubscriptions    PushSubscription[]
+  notifications        Notification[]
   favoriteTeams        TeamFavorite[]      @relation("UserFavoriteTeams")
   communities          CommunityMember[] @relation("UserCommunities")
   teamVerifications    TeamVerification[] @relation("TeamVerificationsByAdmin")
@@ -296,7 +297,24 @@ model PushSubscription {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  }
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String    @default("GENERAL")
+  title     String
+  body      String
+  url       String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@map("notifications")
+}
   
 model CommunityMember {
   id       String   @id @default(cuid())

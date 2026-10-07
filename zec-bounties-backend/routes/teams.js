@@ -866,12 +866,11 @@ router.post("/:teamId/bounties", authenticate, async (req, res) => {
           .filter((u) => u.emailNotifications !== false)
           .map((u) => u.email)
           .filter(Boolean);
-        const pushCandidateIds = users
-          .filter((u) => u.pushNotifications)
-          .map((u) => u.id);
+        const notificationRecipientIds = users.map((u) => u.id);
 
         await Promise.all([
-          sendPushToOptedIn(pushCandidateIds, {
+          sendPushToOptedIn(notificationRecipientIds, {
+            type: "BOUNTY_CREATED",
             title: "New Bounty Available",
             body: `${bounty.title} — ${bounty.bountyAmount} ZEC`,
             url: `/bounty/${bounty.id}`,
