@@ -2,7 +2,6 @@
 
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { NotificationCenter } from "@/components/notification-center";
 import {
   Moon,
   Sun,
@@ -50,6 +49,7 @@ import { useBounty } from "@/lib/bounty-context";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ThemePicker } from "@/components/theme/theme-picker";
+import { NotificationCenter } from "@/components/notification-center";
 
 // ── Role toggle button ────────────────────────────────────────────────────────
 const ROLE_OPTIONS = [
@@ -194,10 +194,12 @@ export function Navbar({
               className="transition-colors hover:text-primary"
             >
               <img
-                src="/ZecHubBlue.png"
-                alt="ZecHubBlue.png"
-                style={{ height: "3rem" }}
-              />
+              src="/ZecHubBlue.png"
+              alt="ZecHub"
+              width={32}
+              height={32}
+              className="h-8 w-8 shrink-0 object-contain"
+            />
             </Link>
             <Link
               href={currentUser ? "/home" : "/"}
@@ -294,7 +296,9 @@ export function Navbar({
 
             <ThemePicker />
 
-            {currentUser && <NotificationCenter />}
+            {currentUser && (
+              <NotificationCenter />
+            )}
 
             {!currentUser ? (
               <Button
@@ -458,10 +462,7 @@ export function Navbar({
 
                       <RoleToggleButton compact />
 
-                      <NotificationCenter
-                        mobile
-                        onNavigate={() => setMobileMenuOpen(false)}
-                      />
+                      <NotificationCenter mobile onNavigate={() => setMobileMenuOpen(false)} />
 
                       <div className="border-t" />
 
@@ -515,3 +516,5 @@ export function Navbar({
     </>
   );
 }
+
+[executed on device: ayobami-Latitude-7490 (7d1414a3-3c53-4ca4-bd2e-0634cf62f6c1)]

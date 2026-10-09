@@ -38,12 +38,20 @@ const sendPushToOptedIn = async (userIds, payload) => {
     body: payload.body || "",
     url: payload.url || null,
   };
+  const bountyId =
+    payload.bountyId ||
+    (typeof notification.url === "string"
+      ? notification.url.match(/^\/bounty\/([^/?#]+)/)?.[1] || null
+      : null);
 
   try {
-    await prisma.notification.createMany({
+    await prisma.inAppNotification.createMany({
       data: uniqueUserIds.map((userId) => ({
         userId,
-        ...notification,
+        bountyId,
+        type: notification.type,
+        title: notification.title,
+        body: notification.body,
       })),
     });
   } catch (err) {
@@ -203,6 +211,24 @@ async function getWeeklyBountyQuota(userId) {
   return { limit, used, remaining: Math.max(0, limit - used), resetsAt: end };
 }
 
+const requireTaskCreation = async (req, res, next) => {
+  try {
+    const u = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { canCreateTasks: true },
+    });
+    if (!u?.canCreateTasks) {
+      return res
+        .status(403)
+        .json({ error: "You are blocked from creating tasks" });
+    }
+    next();
+  } catch (err) {
+    console.error("requireTaskCreation failed:", err);
+    res.status(500).json({ error: "Failed to verify task access" });
+  }
+};
+
 module.exports = {
   shouldSendEmails,
   sendMailIfEnabled,
@@ -212,4 +238,7 @@ module.exports = {
   ONBOARDED_ROLES,
   requireOnboarded,
   getWeeklyBountyQuota,
+  requireTaskCreation,
 };
+
+[executed on device: ayobami-Latitude-7490 (7d1414a3-3c53-4ca4-bd2e-0634cf62f6c1)]

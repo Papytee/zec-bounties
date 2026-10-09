@@ -79,7 +79,7 @@ test("in-app notifications are persisted even when users cannot receive push", a
     filename: prismaPath,
     loaded: true,
     exports: {
-      notification: {
+      inAppNotification: {
         createMany: async ({ data }) => {
           persisted = data;
           return { count: data.length };
@@ -132,6 +132,8 @@ test("in-app notifications are persisted even when users cannot receive push", a
     ["u1", "u2"],
   );
   assert.equal(persisted[0].title, "Bounty updated");
-  assert.equal(persisted[0].url, "/bounty/b1");
+  assert.equal(persisted[0].bountyId, "b1");
   assert.deepEqual(pushRecipients, ["u2"]);
 });
+
+[executed on device: ayobami-Latitude-7490 (7d1414a3-3c53-4ca4-bd2e-0634cf62f6c1)]
