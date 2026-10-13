@@ -27,20 +27,58 @@ const sendMailIfEnabled = async (options) => {
   return sendMail(options);
 };
 
-// Sends a push notification only to users who opted in AND have an active
-// subscription. userIds: string[] — candidates to notify.
+// Persist an in-app notification for every recipient, then send web push only
+// to users who opted in and currently have an active browser subscription.
 const sendPushToOptedIn = async (userIds, payload) => {
-  if (!userIds.length) return;
+  const uniqueUserIds = [...new Set(userIds.filter(Boolean))];
+  if (!uniqueUserIds.length) return;
+
+  const notification = {
+    type: payload.type || "GENERAL",
+    title: payload.title || "ZEC Bounties",
+    body: payload.body || "",
+    url: payload.url || null,
+  };
+  const bountyId =
+    payload.bountyId ||
+    (typeof notification.url === "string"
+      ? notification.url.match(/^\/bounty\/([^/?#]+)/)?.[1] || null
+      : null);
+
+  try {
+    await prisma.inAppNotification.createMany({
+      data: uniqueUserIds.map((userId) => ({
+        userId,
+        bountyId,
+        type: notification.type,
+        title: notification.title,
+        body: notification.body,
+      })),
+    });
+  } catch (err) {
+    console.error("In-app notification persistence failed:", err);
+  }
+
   try {
     const recipients = await prisma.user.findMany({
       where: {
-        id: { in: userIds },
+        id: { in: uniqueUserIds },
         pushNotifications: true,
         pushSubscriptions: { some: {} },
       },
       select: { id: true },
     });
-    await Promise.all(recipients.map((u) => notifyUser(u.id, payload)));
+
+    await Promise.all(
+      recipients.map((u) =>
+        notifyUser(u.id, {
+          title: notification.title,
+          body: notification.body,
+          url: notification.url,
+          type: notification.type,
+        }),
+      ),
+    );
   } catch (err) {
     console.error("Push notification failed:", err);
   }
@@ -70,6 +108,22 @@ async function getBroadcastRecipients(bounty) {
   }
 
   return [...recipients];
+}
+
+function getBountyNotificationAudience(users, bounty, recipients, creatorId) {
+  const otherUsers = users.filter((u) => u.id !== creatorId);
+  const allowedIds = bounty.isPrivate ? new Set(recipients || []) : null;
+  const audienceUsers = bounty.isPrivate
+    ? otherUsers.filter((u) => allowedIds.has(u.id))
+    : otherUsers;
+
+  return {
+    notificationRecipientIds: audienceUsers.map((u) => u.id),
+    emailRecipients: audienceUsers
+      .filter((u) => u.emailNotifications !== false)
+      .map((u) => u.email)
+      .filter(Boolean),
+  };
 }
 
 // Sends a realtime event about one team to the people allowed to see it.
@@ -290,6 +344,7 @@ module.exports = {
   sendMailIfEnabled,
   sendPushToOptedIn,
   getBroadcastRecipients,
+  getBountyNotificationAudience,
   broadcastBountyEvent,
   broadcastTeamEvent,
   invalidateBounty,
